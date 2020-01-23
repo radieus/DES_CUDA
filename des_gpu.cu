@@ -544,13 +544,16 @@ int main(int argc, char** argv)
 	clock_t start, end;
 	float time_total;
 
+	printf("Key length: ");
+	scanf("%d", &key_length);
+
     // GPU part
     volatile int* has_key;
     uint64* cracked_key;
 
     //int N = 1 << 64;
     cudaMallocManaged(&cracked_key, sizeof(uint64));
-    cudaMallocManaged(&has_key, sizeof(volatile int));
+	cudaMallocManaged(&has_key, sizeof(volatile int));
     
     uint64 key = generateKey(key_length);
     uint64 encrypted_message = encryptMessage(message, key);
