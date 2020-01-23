@@ -338,7 +338,7 @@ int main(int argc, char** argv)
 
     printf("CPU : Brute-forcing DES...\n");
 	start = clock();
-    crack<<<512,1024>>>(message, encrypted_message, &cracked_key, &has_key);
+    crack<<<512,1024>>>(message, encrypted_message, cracked_key, has_key);
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
 
