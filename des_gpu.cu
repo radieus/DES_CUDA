@@ -333,7 +333,7 @@ __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64
     uint64 stride = blockDim.x * gridDim.x;
 
     while(i < ~(0ULL) && *has_key == 0) {
-        uint64 currentValue = encrypt_message_gpu(*message, i);
+        uint64 currentValue = encryptMessageGpu(*message, i);
 	
         if (currentValue == *encrypted_message) {
 	        *cracked_key = i;
@@ -552,7 +552,7 @@ int main(int argc, char ** argv) {
         key_size = 64;
     }
     uint64 key = generateKey(key_size);
-    uint64 encrypted_message = encrypt_message(data, key);
+    uint64 encrypted_message = encryptMessage(data, key);
     clock_t start, end;
     float time_elapsed;
 
