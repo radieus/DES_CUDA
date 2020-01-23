@@ -552,6 +552,7 @@ int main(int argc, char** argv)
 	int key_length = 0;
 	clock_t start, end;
 	float time_total;
+	int init = 0;
 
     volatile int* has_key;
     uint64* cracked_key;
@@ -561,8 +562,8 @@ int main(int argc, char** argv)
 
     cudaMallocManaged(&cracked_key, sizeof(uint64));
 	cudaMallocManaged(&has_key, sizeof(volatile int));
-	gpuErrchk((cudaMemcpy(has_key, 0, sizeof(int), cudaMemcpyHostToDevice)) != cudaSuccess);
-    
+	cudaMemcpy(has_key, &temp, sizeof(int), cudaMemcpyHostToDevice)));
+	
     uint64 key = generateKey(key_length);
 	uint64 encrypted_message = encryptMessage(message, key);
 	printBits(key);
@@ -575,7 +576,7 @@ int main(int argc, char** argv)
 	start = clock();
     crack<<<8,8>>>(message, encrypted_message, cracked_key, has_key);
     gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( cudaDeviceSynchronize() );
 
     end = clock();
     time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
