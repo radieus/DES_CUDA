@@ -561,6 +561,7 @@ int main(int argc, char** argv)
 
     cudaMallocManaged(&cracked_key, sizeof(uint64));
 	cudaMallocManaged(&has_key, sizeof(volatile int));
+	gpuErrchk((cudaMemcpy(has_key, 0, sizeof(int), cudaMemcpyHostToDevice)) != cudaSuccess);
     
     uint64 key = generateKey(key_length);
 	uint64 encrypted_message = encryptMessage(message, key);
