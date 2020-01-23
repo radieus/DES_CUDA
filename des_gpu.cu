@@ -324,6 +324,7 @@ __device__ uint32 funcGpu(uint32 R, uint64 K);
 __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key);
 __device__ __host__ void printBits(uint64 n);
 __device__ __host__ uint64 permute(uint64 key, int * table, int size);
+__host__ __device__ uint64 getBit(uint64 number, int bitIdx)
 
 
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key) {
@@ -341,6 +342,11 @@ __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64
         
         i += stride;
     }
+}
+
+__host__ __device__ uint64 getBit(uint64 number, int bitIdx)
+{
+	return 1ULL & (number >> bitIdx);
 }
 
 __device__ __host__ void printBits(uint64 n) { 
@@ -405,7 +411,7 @@ __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key) {
 
     for(int i = 1; i <= 16; i++) {
         L[i] = R[i-1];
-        R[i] = L[i-1] ^ f_gpu(R[i-1], K[i-1]);
+        R[i] = L[i-1] ^ funcGpu(R[i-1], K[i-1]);
     }
 
     uint64 RL = ((uint64) R[16] << 32) | L[16];
@@ -469,7 +475,7 @@ __host__ uint64 encrypt_message(uint64 message, uint64 key) {
 
     for(int i = 1; i <= 16; i++) {
         L[i] = R[i-1];
-        R[i] = L[i-1] ^ f(R[i-1], K[i-1]);
+        R[i] = L[i-1] ^ func(R[i-1], K[i-1]);
     }
 
     uint64 RL = ((uint64) R[16] << 32) | L[16];
@@ -480,7 +486,7 @@ __host__ uint64 encrypt_message(uint64 message, uint64 key) {
 
 __host__ uint32 func(uint32 data, uint64 key)
 {
-	uint64 R_exp = permute(data, E_BIT_HOST, 48);
+	uint64 R_exp = permute(data, E_BIT, 48);
 	uint64 xorr = R_exp ^ key;
 
 	uint64 S[8];
@@ -494,7 +500,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-		S[i] = ALL_S_HOST[i][(int)FirstLast * 16 + (int)Middle];
+		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
 	}
 
 	uint64 result = 0;
@@ -502,7 +508,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 		result |= S[i] << (28 - 4 * i);
 	}
 
-	return permute(result, P_HOST, 32);
+	return permute(result, P, 32);
 }
 
 __device__ uint32 funcGpu(uint32 data, uint64 key)
@@ -521,7 +527,7 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
+		S[i] = ALL_S_CUDA[i][(int)FirstLast * 16 + (int)Middle];
 	}
 
 	uint64 result = 0;
