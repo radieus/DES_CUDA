@@ -355,7 +355,7 @@ __device__ __host__ void printBits(uint64 n)
 { 
     uint64 i; 
 
-    for (i = 1ULL << 63; i > 0; i = i  >> 1)
+    for (i = 1ULL << 63; i > 0; i = i / 2)
         (n & i) ? printf("1") : printf("0"); 
 
     printf("\n");
