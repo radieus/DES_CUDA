@@ -7,9 +7,6 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#include "des_cpu_functions.cuh"
-#include "des_gpu_functions.cu"
-
 
 #define ERR(source) (perror(source), fprintf(stderr,"%s:%d\n",__FILE__,__LINE__), exit(EXIT_FAILURE))
 
