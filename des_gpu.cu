@@ -319,7 +319,6 @@ __host__ uint32 func(uint32 R, uint64 K);
 __host__ uint64 encrypt_message(uint64 message, uint64 key);
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key);
 __device__ void generate_subkeys_gpu(uint64 key, uint64 * subkeys);
-__device__ unsigned char get_S_value_gpu(unsigned char B, int s_idx);
 __device__ uint32 funcGpu(uint32 R, uint64 K);
 __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key);
 __device__ __host__ void printBits(uint64 n);
@@ -513,7 +512,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 
 __device__ uint32 funcGpu(uint32 data, uint64 key)
 {
-	uint64 R_exp = permute(data, E_BIT, 48);
+	uint64 R_exp = permute(data, E_BIT_CUDA, 48);
 	uint64 xorr = R_exp ^ key;
 
 	uint64 S[8];
@@ -535,20 +534,9 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 		result |= S[i] << (28 - 4 * i);
 	}
 
-	return permute(result, P, 32);
+	return permute(result, P_CUDA, 32);
 }
 
-__host__ unsigned char get_S_value(unsigned char B, int s_idx) {
-    unsigned int i = (((B >> 5) & 1U) << 1) | ((B >> 0) & 1U);
-    unsigned int j = 0;
-
-    for(int k = 4; k > 0; k--) {
-        j |= ((B >> k) & 1U);
-        j <<= (k != 1) ? 1 : 0;
-    }
-
-    return (unsigned char) S_POINTER[s_idx][16 * i + j];
-}
 
 int main(int argc, char ** argv) {
 
