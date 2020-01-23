@@ -166,7 +166,7 @@ __host__ uint64 generateKey(int key_size);
 __host__ __device__ uint64 getBit(uint64 number, int bitIdx);
 __host__ __device__ uint64 permute(uint64 key, int* table, int length);
 __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
-__device__ uint64 shiftKeys(uint64 value, int shifts);
+__host__ __device__ uint64 shiftKeys(uint64 value, int shifts);
 __host__ __device__ void createSubkeys(uint64 key, uint64* subKeys);
 __host__ __device__ uint64 encryptMessage(uint64 key, uint64 message);
 __host__ __device__ uint32 func(uint32 data, uint64 key);
