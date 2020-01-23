@@ -561,10 +561,12 @@ int main(int argc, char** argv)
 
 	uint64 data = 0x0123456789ABCDEF;
 
-	int key_length;
-	printf("Key length: ");
-	scanf("%d", &key_length);
-	uint64 key = generateKey(key_length);
+    int key_size = atoi(argv[1]);
+    if(key_size > 64) {
+        printf("Key size reduced to 64 bits.");
+        key_size = 64;
+    }
+	uint64 key = generateKey(key_size);
 	printBits(key);
 	uint64 encrypted_message = encryptMessage(data, key);
 	printBits(encrypted_message);
