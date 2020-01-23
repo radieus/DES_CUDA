@@ -442,7 +442,7 @@ __host__ uint64 generateKey(int key_size) {
     return key;
 }
 
-__host__ void createSubkeys(uint64 key, uint64* subKeys) 
+__host__ void generateSubkeys(uint64 key, uint64* subKeys) 
 {
     uint64 key_plus;
     key_plus = permute(key, PC_1, 56);
