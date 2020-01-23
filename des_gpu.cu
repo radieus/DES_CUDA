@@ -330,7 +330,7 @@ __host__  uint64 encryptMessage(uint64 key, uint64 message);
 __device__  uint64 encryptMessageGpu(uint64 key, uint64 message);
 __host__ uint32 func(uint32 data, uint64 key);
 __device__ uint32 funcGpu(uint32 data, uint64 key);
-__host__ uint64 shiftKeys(uint64 value, int shifts);
+__device__ __host__ uint64 shiftKeys(uint64 value, int shifts);
 
 
 __global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* cracked_key, volatile int* has_key) 
