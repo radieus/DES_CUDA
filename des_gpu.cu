@@ -319,17 +319,13 @@ int main(int argc, char** argv)
     // GPU part
     volatile int* has_key;
     uint64* cracked_key;
-    printf("1\n");
+
     //int N = 1 << 64;
     cudaMallocManaged(&cracked_key, sizeof(uint64));
-    printf("1\n");
     cudaMallocManaged(&has_key, sizeof(volatile int));
-    printf("1\n");
     
     uint64 key = generateKey(key_length);
-    printf("1\n");
     uint64 encrypted_message = encryptMessage(message, key);
-    printf("1\n");
     
 	//printf("%llX\n", key);
 	// ~~~ GPU ~~~
