@@ -158,6 +158,29 @@ __constant__ int SHIFTS[16] = {
 	1
 };
 
+int SHIFTS[16] = {
+	1,
+	1,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	1,
+	2,
+	2,
+	2,
+	2,
+	2,
+	2,
+	1
+};
+
+int* ALL_S[8] = {
+	S1, S2, S3, S4, S5, S6, S7, S8
+};
+
 typedef unsigned long long uint64;
 typedef unsigned long uint32;
 
