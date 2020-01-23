@@ -465,7 +465,7 @@ __host__ uint64 encryptMessage(uint64 message, uint64 key)
 __device__ uint64 encryptMessageGpu(uint64 message, uint64 key)
 {	
 	uint64 K[16];
-	createSubkeys(key, K);
+	createSubkeysGpu(key, K);
 
 	uint32 L[17];
 	uint32 R[17];
