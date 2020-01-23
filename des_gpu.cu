@@ -313,16 +313,14 @@ __constant__ int SHIFTS_CUDA[16] = {
 typedef unsigned long uint32;
 typedef unsigned long long uint64;
 
-
 __host__ uint64 generate_key(int key_size);
 __host__ void generate_subkeys(uint64 key, uint64 * subkeys);
-__host__ unsigned char get_S_value(unsigned char B, int s_idx);
-__host__ uint32 f(uint32 R, uint64 K);
+__host__ uint32 func(uint32 R, uint64 K);
 __host__ uint64 encrypt_message(uint64 message, uint64 key);
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key);
 __device__ void generate_subkeys_gpu(uint64 key, uint64 * subkeys);
 __device__ unsigned char get_S_value_gpu(unsigned char B, int s_idx);
-__device__ uint32 f_gpu(uint32 R, uint64 K);
+__device__ uint32 funcGpu(uint32 R, uint64 K);
 __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key);
 __device__ __host__ void printBits(uint64 n);
 __device__ __host__ uint64 permute(uint64 key, int * table, int size);
@@ -345,7 +343,6 @@ __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64
     }
 }
 
-// helper function for debugging purposes
 __device__ __host__ void printBits(uint64 n) { 
     uint64 i; 
     for (i = 1ULL << 63; i > 0; i = i / 2) {
@@ -354,15 +351,16 @@ __device__ __host__ void printBits(uint64 n) {
     printf("\n");
 } 
 
-__device__ __host__ uint64 permute(uint64 key, int * table, int size) {
-    uint64 permuted_key = 0;
+__host__ __device__ uint64 permute(uint64 key, int* table, int length)
+{
+    uint64 permKey = 0;
 
-    for(int i = 0; i < size; i++) {
-        int bit = (key >> (table[i] - 1)) & 1U;
-        if(bit == 1) permuted_key |= 1ULL << i;
+    for (int i = 0; i < length; i++) {
+        uint64 bit = (key >> (table[i] - 1)) & 1U;
+        permKey = (permKey & ~(1UL << i)) | (bit << i);
     }
 
-    return permuted_key;
+    return permKey;
 }
 
 __device__ void generate_subkeys_gpu(uint64 key, uint64 * subkeys) {
@@ -416,33 +414,6 @@ __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key) {
     return encrypted_message;
 }
 
-__device__ uint32 f_gpu(uint32 R, uint64 K) {
-    int size_E = sizeof(E_BIT_CUDA)/sizeof(E_BIT_CUDA[0]);
-    unsigned char S[8];
-    uint32 s_string = 0;
-    uint64 expanded_R = permute(R, E_BIT_CUDA, size_E);
-
-    uint64 R_xor_K = expanded_R ^ K;
-
-    for(int i = 0; i < 8; i++) {
-        S[i] = get_S_value_gpu((unsigned char) (R_xor_K >> 6*(7 - i)) & 0x3F, i);
-        s_string |= S[i];
-        s_string <<= (i != 7) ? 4 : 0;
-    }
-    return (uint32) permute(s_string, P_CUDA, 32);
-}
-
-__device__ unsigned char get_S_value_gpu(unsigned char B, int s_idx) {
-    unsigned int i = (((B >> 5) & 1U) << 1) | ((B >> 0) & 1U);
-    unsigned int j = 0;
-
-    for(int k = 4; k > 0; k--) {
-        j |= ((B >> k) & 1U);
-        j <<= (k != 1) ? 1 : 0;
-    }
-
-    return (unsigned char) S_POINTER_CUDA[s_idx][16 * i + j];
-}
 
 __host__ uint64 generate_key(int key_size) {
 
@@ -507,20 +478,58 @@ __host__ uint64 encrypt_message(uint64 message, uint64 key) {
     return encrypted_message;
 }
 
-__host__ uint32 f(uint32 R, uint64 K) {
-    int size_E = sizeof(E_BIT)/sizeof(E_BIT[0]);
-    unsigned char S[8];
-    uint32 s_string = 0;
-    uint64 expanded_R = permute(R, E_BIT, size_E);
+__host__ uint32 func(uint32 data, uint64 key)
+{
+	uint64 R_exp = permute(data, E_BIT_HOST, 48);
+	uint64 xorr = R_exp ^ key;
 
-    uint64 R_xor_K = expanded_R ^ K;
+	uint64 S[8];
+	uint64 B[8];
 
-    for(int i = 0; i < 8; i++) {
-        S[i] = get_S_value((unsigned char) (R_xor_K >> 6*(7 - i)) & 0x3F, i);
-        s_string |= S[i];
-        s_string <<= (i != 7) ? 4 : 0;
-    }
-    return (uint32) permute(s_string, P, 32);
+	for (int i = 0; i < 8; i++) {
+		B[i] = 0;
+		for (int j = 0; j < 6; j++) {
+			B[i] = (B[i] & ~(1ULL << j)) | (getBit(xorr, j + (7 - i) * 6) << j);
+		}
+		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
+		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
+
+		S[i] = ALL_S_HOST[i][(int)FirstLast * 16 + (int)Middle];
+	}
+
+	uint64 result = 0;
+	for (int i = 0; i < 8; i++) {
+		result |= S[i] << (28 - 4 * i);
+	}
+
+	return permute(result, P_HOST, 32);
+}
+
+__device__ uint32 funcGpu(uint32 data, uint64 key)
+{
+	uint64 R_exp = permute(data, E_BIT, 48);
+	uint64 xorr = R_exp ^ key;
+
+	uint64 S[8];
+	uint64 B[8];
+
+	for (int i = 0; i < 8; i++) {
+		B[i] = 0;
+		for (int j = 0; j < 6; j++) {
+			B[i] = (B[i] & ~(1ULL << j)) | (getBit(xorr, j + (7 - i) * 6) << j);
+		}
+		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
+		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
+
+		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
+	}
+
+	uint64 result = 0;
+	for (int i = 0; i < 8; i++) {
+		result |= S[i] << (28 - 4 * i);
+	}
+
+	return permute(result, P, 32);
 }
 
 __host__ unsigned char get_S_value(unsigned char B, int s_idx) {
