@@ -120,7 +120,7 @@ int S8_HOST[64] = {
 	2,	1,	14,	7,	4,	10,	8,	13,	15,	12,	9,	0,	3,	5,	6,	11,
 };
 
-int * ALL_S[8] = {
+int * ALL_S_HOST[8] = {
 	S1_HOST, S2_HOST, S3_HOST, S4_HOST, S5_HOST, S6_HOST, S7_HOST, S8_HOST
 };
 
@@ -505,7 +505,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
+		S[i] = ALL_S_HOST[i][(int)FirstLast * 16 + (int)Middle];
 	}
 
 	uint64 result = 0;
