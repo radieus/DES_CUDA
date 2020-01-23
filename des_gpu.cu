@@ -417,8 +417,8 @@ __host__ void createSubkeys(uint64 key, uint64* subKeys)
 	splitKey(key_plus, &C[0], &D[0], 56);
 
     for (int i = 1; i < 17; i++) {
-        C[i] = shiftKeys(C[i-1], SHIFTS[i-1]);
-        D[i] = shiftKeys(D[i-1], SHIFTS[i-1]);
+        C[i] = shiftKeys(C[i-1], SHIFTS_HOST[i-1]);
+        D[i] = shiftKeys(D[i-1], SHIFTS_HOST[i-1]);
     }
 
 	for (int i = 0; i < 16; i++) {
