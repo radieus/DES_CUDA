@@ -385,7 +385,7 @@ __device__ __host__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
     }
 }
 
-__device__ void createSubkeysGpu(uint64 key, uint64* subKeys) 
+__device__ void generateSubkeysGpu(uint64 key, uint64* subKeys) 
 {
     uint64 key_plus;
     key_plus = permute(key, PC_1_CUDA, 56);
