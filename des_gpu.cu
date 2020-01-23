@@ -323,7 +323,7 @@ __device__ uint32 funcGpu(uint32 R, uint64 K);
 __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key);
 __device__ __host__ void printBits(uint64 n);
 __device__ __host__ uint64 permute(uint64 key, int * table, int size);
-__host__ __device__ uint64 getBit(uint64 number, int bitIdx)
+__host__ __device__ uint64 getBit(uint64 number, int bitIdx);
 
 
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key) {
