@@ -374,6 +374,17 @@ __host__ uint64 shiftKeys(uint64 value, int shifts)
     return (value << shifts) | (value >> (28 - shifts));
 }
 
+__host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
+{
+    if (size == 64) {
+        C[0] = key & 0xFFFFFFFF;
+        D[0] = (key >> size/2) & 0xFFFFFFFF;
+    } else if (size == 56) {
+        C[0] = key & 0xFFFFFFF;
+        D[0] = (key >> size/2) & 0xFFFFFFF;
+    }
+}
+
 __device__ void createSubkeysGpu(uint64 key, uint64* subKeys) 
 {
     uint64 key_plus;
@@ -456,7 +467,7 @@ __host__ uint64 encrypt_message(uint64 message, uint64 key) {
     uint64 K[16];
     uint32 L[17], R[17];
 
-    generate_subkeys(key, K);
+    generateSubkeys(key, K);
 
     int size_IP = sizeof(IP)/sizeof(IP[0]);
     uint64 IP_message = permute(message, IP, size_IP);
@@ -544,7 +555,7 @@ int main(int argc, char ** argv) {
         printf("Key size reduced to 64 bits.");
         key_size = 64;
     }
-    uint64 key = generate_key(key_size);
+    uint64 key = generateKey(key_size);
     uint64 encrypted_message = encrypt_message(data, key);
     clock_t start, end;
     float time_elapsed;
