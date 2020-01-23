@@ -590,7 +590,7 @@ int main(int argc, char ** argv) {
     start = clock();
 
     for(uint64 i = 0; i <= ~(0ULL); i++) {
-        uint64 msg = encryptMessage(data, i);
+        uint64 msg = encryptMessage(message, i);
         //printBits(i);
         if(msg == encrypted_message) {
             end = clock();
