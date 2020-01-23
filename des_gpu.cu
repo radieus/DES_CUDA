@@ -290,7 +290,7 @@ __device__ uint64 encryptMessage(uint64 message, uint64 key)
 __device__ uint32 func(uint32 data, uint64 key)
 {
 	uint64 R_exp = permute(data, E_BIT, 48);
-	uint64 xor = R_exp ^ key;
+	uint64 xorr = R_exp ^ key;
 
 	uint64 S[8];
 	uint64 B[8];
@@ -298,7 +298,7 @@ __device__ uint32 func(uint32 data, uint64 key)
 	for (int i = 0; i < 8; i++) {
 		B[i] = 0;
 		for (int j = 0; j < 6; j++) {
-			B[i] = (B[i] & ~(1ULL << j)) | (getBit(xor, j + (7 - i) * 6) << j);
+			B[i] = (B[i] & ~(1ULL << j)) | (getBit(xorr, j + (7 - i) * 6) << j);
 		}
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
