@@ -8,6 +8,14 @@
 #include "device_launch_parameters.h"
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
 
 #ifndef DES_CONSTANTS
 #define DES_CONSTANTS
@@ -572,7 +580,7 @@ int main(int argc, char ** argv) {
     time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
     printf("GPU : Key found!\n");
     printf("GPU : Time taken: %f\n", time_total);
-    printf("GPU : Cracked key: %llX\n", found_key);
+    printf("GPU : Cracked key: %llX\n", *cracked_key);
 
 
     // --------- CPU -------------
