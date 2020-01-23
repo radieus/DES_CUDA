@@ -7,8 +7,7 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-
-#define ERR(source) (perror(source), fprintf(stderr,"%s:%d\n",__FILE__,__LINE__), exit(EXIT_FAILURE))
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
 #ifndef DES_CONSTANTS
 #define DES_CONSTANTS
@@ -539,7 +538,7 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 
 int main(int argc, char ** argv) {
 
-    uint64 data = 0x0123456789ABCDEF;
+    uint64 message = 0x0123456789ABCDEF;
 	int key_size = 0;
 
 	printf("Key length: ");
@@ -566,9 +565,9 @@ int main(int argc, char ** argv) {
 	
 	start = clock();
 	
-	brute_force<<<256, 128>>>(d_data, d_msg, cracked_key, has_key);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	brute_force<<<256, 128>>>(message, encrypted_message, cracked_key, has_key);
+	gpuErrchk(cudaPeekAtLastError());
+	gpuErrchk(cudaDeviceSynchronize());
 
     
     end = clock();
