@@ -313,17 +313,18 @@ __constant__ int SHIFTS_CUDA[16] = {
 typedef unsigned long uint32;
 typedef unsigned long long uint64;
 
-__host__ uint64 generate_key(int key_size);
-__host__ void generate_subkeys(uint64 key, uint64 * subkeys);
-__host__ uint32 func(uint32 R, uint64 K);
+__host__ uint64 generatekey(int key_size);                                      //
+__host__ void generateSubkeys(uint64 key, uint64 * subkeys);                  
+__host__ uint32 func(uint32 R, uint64 K);                                       //
 __host__ uint64 encrypt_message(uint64 message, uint64 key);
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key);
-__device__ void generate_subkeys_gpu(uint64 key, uint64 * subkeys);
-__device__ uint32 funcGpu(uint32 R, uint64 K);
+__device__ void generateSubkeysGpu(uint64 key, uint64 * subkeys);
+__device__ uint32 funcGpu(uint32 R, uint64 K);                                  //
 __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key);
-__device__ __host__ void printBits(uint64 n);
-__device__ __host__ uint64 permute(uint64 key, int * table, int size);
-__host__ __device__ uint64 getBit(uint64 number, int bitIdx);
+__device__ __host__ void printBits(uint64 n);                                   //
+__device__ __host__ uint64 permute(uint64 key, int * table, int size);          //
+__host__ __device__ uint64 getBit(uint64 number, int bitIdx);                   //
+__host__ uint64 shiftKeys(uint64 value, int shifts);                            //
 
 
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key) {
@@ -368,32 +369,30 @@ __host__ __device__ uint64 permute(uint64 key, int* table, int length)
     return permKey;
 }
 
-__device__ void generate_subkeys_gpu(uint64 key, uint64 * subkeys) {
-    int size_PC1 = sizeof(PC_1_CUDA)/sizeof(PC_1_CUDA[0]);
-    int size_PC2 = sizeof(PC_2_CUDA)/sizeof(PC_2_CUDA[0]);
+__host__ uint64 shiftKeys(uint64 value, int shifts)
+{
+    return (value << shifts) | (value >> (28 - shifts));
+}
 
-    uint64 permuted_key = permute(key, PC_1_CUDA, size_PC1);
+__device__ void createSubkeysGpu(uint64 key, uint64* subKeys) 
+{
+    uint64 key_plus;
+    key_plus = permute(key, PC_1_CUDA, 56);
 
-    uint32 C[17], D[17];
+	uint32 C[17];
+	uint32 D[17];
 
-    C[0]  = (uint32) (permuted_key >> 28  & 0xFFFFFFF);
-    D[0]  = (uint32) (permuted_key >> 0 & 0xFFFFFFF);
+	splitKey(key_plus, &C[0], &D[0], 56);
 
-    // apply left shifts
-    for(int i = 1; i <= 16; i++) {
-
-        C[i] = C[i-1] << SHIFTS_CUDA[i-1];
-        D[i] = D[i-1] << SHIFTS_CUDA[i-1];
-
-        C[i] |= C[i] >> 28;
-        D[i] |= D[i] >> 28;
-
-        C[i] &= ~(3UL << 28);
-        D[i] &= ~(3UL << 28);
-
-        uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
-        subkeys[i-1] = permute(merged_subkey, PC_2_CUDA, size_PC2);
+    for (int i = 1; i < 17; i++) {
+        C[i] = shiftKeys(C[i-1], SHIFTS_CUDA[i-1]);
+        D[i] = shiftKeys(D[i-1], SHIFTS_CUDA[i-1]);
     }
+
+	for (int i = 0; i < 16; i++) {
+		subKeys[i] = C[i + 1] << 28 | D[i + 1];
+		subKeys[i] = permute(subKeys[i], PC_2_CUDA, 48);
+	}
 }
 
 __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key) {
@@ -420,7 +419,7 @@ __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key) {
 }
 
 
-__host__ uint64 generate_key(int key_size) {
+__host__ uint64 generateKey(int key_size) {
 
     srand(time(NULL));
     uint64 key = 0;
@@ -432,32 +431,25 @@ __host__ uint64 generate_key(int key_size) {
     return key;
 }
 
-__host__ void generate_subkeys(uint64 key, uint64 * subkeys) {
-    int size_PC1 = sizeof(PC_1)/sizeof(PC_1[0]);
-    int size_PC2 = sizeof(PC_2)/sizeof(PC_2[0]);
+__host__ void createSubkeys(uint64 key, uint64* subKeys) 
+{
+    uint64 key_plus;
+    key_plus = permute(key, PC_1, 56);
 
-    uint64 permuted_key = permute(key, PC_1, size_PC1);
+	uint32 C[17];
+	uint32 D[17];
 
-    uint32 C[17], D[17];
+	splitKey(key_plus, &C[0], &D[0], 56);
 
-    C[0]  = (uint32) (permuted_key >> 28  & 0xFFFFFFF);
-    D[0]  = (uint32) (permuted_key >> 0 & 0xFFFFFFF);
-
-    // apply left shifts
-    for(int i = 1; i <= 16; i++) {
-
-        C[i] = C[i-1] << SHIFTS[i-1];
-        D[i] = D[i-1] << SHIFTS[i-1];
-
-        C[i] |= C[i] >> 28;
-        D[i] |= D[i] >> 28;
-
-        C[i] &= ~(3UL << 28);
-        D[i] &= ~(3UL << 28);
-
-        uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
-        subkeys[i-1] = permute(merged_subkey, PC_2, size_PC2);
+    for (int i = 1; i < 17; i++) {
+        C[i] = shiftKeys(C[i-1], SHIFTS[i-1]);
+        D[i] = shiftKeys(D[i-1], SHIFTS[i-1]);
     }
+
+	for (int i = 0; i < 16; i++) {
+		subKeys[i] = C[i + 1] << 28 | D[i + 1];
+		subKeys[i] = permute(subKeys[i], PC_2, 48);
+	}
 }
 
 __host__ uint64 encrypt_message(uint64 message, uint64 key) {
