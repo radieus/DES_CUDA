@@ -528,7 +528,7 @@ __device__ uint64 encryptMessageGpu(uint64 message, uint64 key) {
 }
 
 __device__ uint32 funcGpu(uint32 R, uint64 K) {
-    int size_E = sizeof(E_BIT])/sizeof(E_BIT[0]);
+    int size_E = (sizeof(E_BIT])/sizeof(E_BIT[0]));
     unsigned char S[8];
     uint32 s_string = 0;
     uint64 expanded_R = permute(R, E_BIT, size_E);
