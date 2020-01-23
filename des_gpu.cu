@@ -166,7 +166,6 @@ __host__ uint64 generateKey(int key_size);
 __host__ __device__ uint64 getBit(uint64 number, int bitIdx);
 __host__ __device__ uint64 permute(uint64 key, int* table, int length);
 __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
-__host__ __device__ uint64 shiftKeys(uint64 value, int shifts);
 __host__ __device__ void createSubkeys(uint64 key, uint64* subKeys);
 __host__ __device__ uint64 encryptMessage(uint64 key, uint64 message);
 __host__ __device__ uint32 func(uint32 data, uint64 key);
@@ -240,11 +239,6 @@ __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
     }
 }
 
-__device__ uint64 shiftKeys(uint64 value, int shifts)
-{
-    return (value << shifts) | (value >> (28 - shifts));
-}
-
 __host__ __device__ void createSubkeys(uint64 key, uint64* subKeys) 
 {
     uint64 key_plus;
@@ -256,8 +250,8 @@ __host__ __device__ void createSubkeys(uint64 key, uint64* subKeys)
 	splitKey(key_plus, &C[0], &D[0], 56);
 
     for (int i = 1; i < 17; i++) {
-        C[i] = shiftKeys(C[i-1], SHIFTS[i-1]);
-        D[i] = shiftKeys(D[i-1], SHIFTS[i-1]);
+        C[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
+        D[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
     }
 
 	for (int i = 0; i < 16; i++) {
