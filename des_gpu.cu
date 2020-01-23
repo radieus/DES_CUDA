@@ -169,7 +169,7 @@ __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
 __device__ uint64 shiftKeys(uint64 value, int shifts);
 __host__ __device__ void createSubkeys(uint64 key, uint64* subKeys);
 __host__ __device__ uint64 encryptMessage(uint64 key, uint64 message);
-__host__ __device__ uint32 func(uint32 data, uint64 key);
+__device__ uint32 func(uint32 data, uint64 key);
 
 __global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) {
     
@@ -287,7 +287,7 @@ __host__ __device__ uint64 encryptMessage(uint64 message, uint64 key)
     return permute(RL, IP_REVERSED, 64);
 }
 
-__host__ __device__ uint32 func(uint32 data, uint64 key)
+__device__ uint32 func(uint32 data, uint64 key)
 {
 	uint64 R_exp = permute(data, E_BIT, 48);
 	uint64 xorr = R_exp ^ key;
