@@ -16,9 +16,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
-#ifndef DES_CONSTANTS
-#define DES_CONSTANTS
-
 int PC_1_HOST[56] = {
 	57,	49,	41,	33,	25,	17,	9,
 	1,	58,	50,	42,	34,	26,	18,
@@ -164,11 +161,6 @@ int SHIFTS_HOST[16] = {
 	1
 };
 
-#endif
-
-#ifndef DES_CONSTANTS
-#define DES_CONSTANTS
-
 __constant__ int PC_1[56] = {
 	57,	49,	41,	33,	25,	17,	9,
 	1,	58,	50,	42,	34,	26,	18,
@@ -313,8 +305,6 @@ __constant__ int SHIFTS[16] = {
 	2,
 	1
 };
-
-#endif
 
 typedef unsigned long uint32;
 typedef unsigned long long uint64;
