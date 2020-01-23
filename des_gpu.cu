@@ -339,7 +339,7 @@ int main(int argc, char** argv)
     end = clock();
     time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
     printf("GPU : Key found!\n");
-    printf("GPU : Found key: %llX\n", cracked_key);
+    printf("GPU : Found key: %llX\n", *cracked_key);
     printf("GPU : Total time: %f\n", time_total);
 
 
