@@ -558,7 +558,7 @@ int main(int argc, char ** argv) {
 	}
 	
     uint64 key = generateKey(key_size);
-    uint64 encrypted_message = encryptMessage(data, key);
+    uint64 encrypted_message = encryptMessage(message, key);
     clock_t start, end;
     float time_total;
 
