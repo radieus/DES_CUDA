@@ -552,7 +552,7 @@ __device__ unsigned char get_S_value_gpu(unsigned char B, int s_idx) {
         j <<= (k != 1) ? 1 : 0;
     }
 
-    return (unsigned char) ALl_S[s_idx][16 * i + j];
+    return (unsigned char) ALL_S[s_idx][16 * i + j];
 }
 
 
