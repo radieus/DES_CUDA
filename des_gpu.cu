@@ -3,11 +3,7 @@
 #include <time.h>
 #include <strings.h>
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-#define ERR(source) (perror(source), fprintf(stderr,"%s:%d\n",__FILE__,__LINE__), exit(EXIT_FAILURE))
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess) 
@@ -322,7 +318,6 @@ int SHIFTS_HOST[16] = {
 typedef unsigned long long uint64;
 typedef unsigned long uint32;
 
-__global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* cracked_key, volatile int* has_key);
 __device__ __host__ void printBits(uint64 n); //
 __host__ uint64 generateKey(int key_size); //
 __host__ __device__ uint64 getBit(uint64 number, int bitIdx);
@@ -334,20 +329,21 @@ __host__  uint64 encryptMessage(uint64 key, uint64 message);
 __device__  uint64 encryptMessageGpu(uint64 key, uint64 message);
 __host__ uint32 func(uint32 data, uint64 key);
 __device__ uint32 funcGpu(uint32 data, uint64 key);
-__device__ __host__ uint64 shiftKeys(uint64 value, int shifts);
-__device__ unsigned char get_S_value_gpu(unsigned char B, int s_idx);
+__host__ uint64 shiftKeys(uint64 value, int shifts);
 
 
-__global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* cracked_key, volatile int* has_key) 
+__global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) 
 {
     
     uint64 i = blockIdx.x * blockDim.x + threadIdx.x;
     uint64 stride = blockDim.x * gridDim.x;
 
     while(i < ~(0ULL) && *has_key == 0) {
-        uint64 currentValue = encryptMessageGpu(*message, i);
+		printf("%llu\n", i);
+        uint64 currentValue = encryptMessageGpu(message, i);
 		printBits(currentValue);
-        if (currentValue == *encrypted_message) {
+
+        if (currentValue == encrypted_message) {
 	        *cracked_key = i;
 	        *has_key = 1;   
         }
@@ -356,6 +352,15 @@ __global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* crac
     }
 }
 
+__device__ __host__ void printBits(uint64 n)
+{ 
+    uint64 i; 
+
+    for (i = 1ULL << 63; i > 0; i = i  >> 1)
+        (n & i) ? printf("1") : printf("0"); 
+
+    printf("\n");
+}
 
 __host__ uint64 shiftKeys(uint64 value, int shifts)
 {
@@ -380,6 +385,18 @@ __host__ __device__ uint64 getBit(uint64 number, int bitIdx)
 	return 1ULL & (number >> bitIdx);
 }
 
+__host__ __device__ uint64 permute(uint64 key, int* table, int length)
+{
+    uint64 permKey = 0;
+
+    for (int i = 0; i < length; i++) {
+        uint64 bit = (key >> (table[i] - 1)) & 1U;
+        permKey = (permKey & ~(1UL << i)) | (bit << i);
+    }
+
+    return permKey;
+}
+
 __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
 {
     if (size == 64) {
@@ -393,33 +410,45 @@ __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
 
 __host__ void createSubkeys(uint64 key, uint64* subKeys) 
 {
-    int size_PC1 = sizeof(PC_1)/sizeof(PC_1_HOST[0]);
-    int size_PC2 = sizeof(PC_2)/sizeof(PC_2_HOST[0]);
+    uint64 key_plus;
+    key_plus = permute(key, PC_1, 56);
 
-    uint64 permuted_key = permute(key, PC_1, size_PC1);
+	uint32 C[17];
+	uint32 D[17];
 
-    uint32 C[17], D[17];
+	splitKey(key_plus, &C[0], &D[0], 56);
 
-    C[0]  = (uint32) (permuted_key >> 28  & 0xFFFFFFF);
-    D[0]  = (uint32) (permuted_key >> 0 & 0xFFFFFFF);
-
-    // apply left shifts
-    for(int i = 1; i <= 16; i++) {
-
-        C[i] = C[i-1] << SHIFTS_HOST[i-1];
-        D[i] = D[i-1] << SHIFTS_HOST[i-1];
-
-        C[i] |= C[i] >> 28;
-        D[i] |= D[i] >> 28;
-
-        C[i] &= ~(3UL << 28);
-        D[i] &= ~(3UL << 28);
-
-        uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
-        subKeys[i-1] = permute(merged_subkey, PC_2_HOST, size_PC2);
+    for (int i = 1; i < 17; i++) {
+        C[i] = shiftKeys(C[i-1], SHIFTS_HOST[i-1]);
+        D[i] = shiftKeys(D[i-1], SHIFTS_HOST[i-1]);
     }
+
+	for (int i = 0; i < 16; i++) {
+		subKeys[i] = C[i + 1] << 28 | D[i + 1];
+		subKeys[i] = permute(subKeys[i], PC_2, 48);
+	}
 }
 
+__device__ void createSubkeysGpu(uint64 key, uint64* subKeys) 
+{
+    uint64 key_plus;
+    key_plus = permute(key, PC_1, 56);
+
+	uint32 C[17];
+	uint32 D[17];
+
+	splitKey(key_plus, &C[0], &D[0], 56);
+
+    for (int i = 1; i < 17; i++) {
+        C[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
+        D[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
+    }
+
+	for (int i = 0; i < 16; i++) {
+		subKeys[i] = C[i + 1] << 28 | D[i + 1];
+		subKeys[i] = permute(subKeys[i], PC_2, 48);
+	}
+}
 
 __host__ uint64 encryptMessage(uint64 message, uint64 key)
 {	
@@ -428,7 +457,7 @@ __host__ uint64 encryptMessage(uint64 message, uint64 key)
 
 	uint32 L[17];
 	uint32 R[17];
-	uint64 ip = permute(message, IP_HOST, 64);
+	uint64 ip = permute(message, IP, 64);
 
 	splitKey(ip, &L[0], &R[0], 64);
 
@@ -442,10 +471,30 @@ __host__ uint64 encryptMessage(uint64 message, uint64 key)
     return permute(RL, IP_REVERSED_HOST, 64);
 }
 
+__device__ uint64 encryptMessageGpu(uint64 message, uint64 key)
+{	
+	uint64 K[16];
+	createSubkeysGpu(key, K);
+
+	uint32 L[17];
+	uint32 R[17];
+	uint64 ip = permute(message, IP, 64);
+
+	splitKey(ip, &L[0], &R[0], 64);
+
+	for (int i = 1; i < 17; i++) {
+		L[i] = R[i-1];
+		R[i] = L[i-1] ^ funcGpu(R[i-1], K[i-1]);
+	}
+
+    uint64 RL = ((uint64) R[16] << 32) | L[16];
+
+    return permute(RL, IP_REVERSED, 64);
+}
 
 __host__ uint32 func(uint32 data, uint64 key)
 {
-	uint64 R_exp = permute(data, E_BIT_HOST, 48);
+	uint64 R_exp = permute(data, E_BIT, 48);
 	uint64 xorr = R_exp ^ key;
 
 	uint64 S[8];
@@ -467,183 +516,73 @@ __host__ uint32 func(uint32 data, uint64 key)
 		result |= S[i] << (28 - 4 * i);
 	}
 
-	return (uint32) permute(result, P_HOST, 32);
-}
-__device__ __host__ void printBits(uint64 n) { 
-    uint64 i; 
-    for (i = 1ULL << 63; i > 0; i = i / 2) {
-        (n & i) ? printf("1") : printf("0"); 
-    }
-    printf("\n");
-} 
-
-__device__ __host__ uint64 permute(uint64 key, int * table, int size) {
-    uint64 permuted_key = 0;
-
-    for(int i = 0; i < size; i++) {
-        int bit = (key >> (table[i] - 1)) & 1U;
-        if(bit == 1) permuted_key |= 1ULL << i;
-    }
-
-    return permuted_key;
+	return permute(result, P, 32);
 }
 
-__device__ void createSubkeysGpu(uint64 key, uint64 * subkeys) {
-    int size_PC1 = sizeof(PC_1)/sizeof(PC_1[0]);
-    int size_PC2 = sizeof(PC_2)/sizeof(PC_2[0]);
+__device__ uint32 funcGpu(uint32 data, uint64 key)
+{
+	uint64 R_exp = permute(data, E_BIT, 48);
+	uint64 xorr = R_exp ^ key;
 
-    uint64 permuted_key = permute(key, PC_1, size_PC1);
+	uint64 S[8];
+	uint64 B[8];
 
-    uint32 C[17], D[17];
+	for (int i = 0; i < 8; i++) {
+		B[i] = 0;
+		for (int j = 0; j < 6; j++) {
+			B[i] = (B[i] & ~(1ULL << j)) | (getBit(xorr, j + (7 - i) * 6) << j);
+		}
+		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
+		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-    C[0]  = (uint32) (permuted_key >> 28  & 0xFFFFFFF);
-    D[0]  = (uint32) (permuted_key >> 0 & 0xFFFFFFF);
+		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
+	}
 
-    // apply left shifts
-    for(int i = 1; i <= 16; i++) {
+	uint64 result = 0;
+	for (int i = 0; i < 8; i++) {
+		result |= S[i] << (28 - 4 * i);
+	}
 
-        C[i] = C[i-1] << SHIFTS[i-1];
-        D[i] = D[i-1] << SHIFTS[i-1];
-
-        C[i] |= C[i] >> 28;
-        D[i] |= D[i] >> 28;
-
-        C[i] &= ~(3UL << 28);
-        D[i] &= ~(3UL << 28);
-
-        uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
-        subkeys[i-1] = permute(merged_subkey, PC_2, size_PC2);
-    }
+	return permute(result, P, 32);
 }
-
-__device__ uint64 encryptMessageGpu(uint64 message, uint64 key) {
-    uint64 K[16];
-    uint32 L[17], R[17];
-
-    createSubkeysGpu(key, K);
-
-    int size_IP = sizeof(IP)/sizeof(IP[0]);
-    uint64 IP_message = permute(message, IP, size_IP);
-
-    L[0]  = (uint32) (IP_message >> 32 & 0xFFFFFFFF);
-    R[0]  = (uint32) (IP_message >> 0 & 0xFFFFFFFF);
-
-    for(int i = 1; i <= 16; i++) {
-        L[i] = R[i-1];
-        R[i] = L[i-1] ^ funcGpu(R[i-1], K[i-1]);
-    }
-
-    uint64 RL = ((uint64) R[16] << 32) | L[16];
-    uint64 encrypted_message = permute(RL, IP_REVERSED, 64);
-
-    return encrypted_message;
-}
-
-__device__ uint32 funcGpu(uint32 R, uint64 K) {
-    int size_E = sizeof(E_BIT)/sizeof(E_BIT[0]);
-    unsigned char S[8];
-    uint32 s_string = 0;
-    uint64 expanded_R = permute(R, E_BIT, size_E);
-
-    uint64 R_xor_K = expanded_R ^ K;
-
-    for(int i = 0; i < 8; i++) {
-        S[i] = get_S_value_gpu((unsigned char) (R_xor_K >> 6*(7 - i)) & 0x3F, i);
-        s_string |= S[i];
-        s_string <<= (i != 7) ? 4 : 0;
-    }
-    return (uint32) permute(s_string, P, 32);
-}
-
-__device__ unsigned char get_S_value_gpu(unsigned char B, int s_idx) {
-    unsigned int i = (((B >> 5) & 1U) << 1) | ((B >> 0) & 1U);
-    unsigned int j = 0;
-
-    for(int k = 4; k > 0; k--) {
-        j |= ((B >> k) & 1U);
-        j <<= (k != 1) ? 1 : 0;
-    }
-
-    return (unsigned char) ALL_S[s_idx][16 * i + j];
-}
-
 
 int main(int argc, char** argv) 
 { 
+    uint64 message = 0x0123456789ABCDEF;
+	int key_length = 0;
+	clock_t start, end;
+	float time_total;
 
-	uint64 data = 0x0123456789ABCDEF;
+	int* has_key;
+    uint64* cracked_key;
 
-    int key_size = atoi(argv[1]);
-    if(key_size > 64) {
-        printf("Key size reduced to 64 bits.");
-        key_size = 64;
-    }
-	uint64 key = generateKey(key_size);
-	printBits(key);
-	uint64 encrypted_message = encryptMessage(data, key);
-	printBits(encrypted_message);
-    clock_t start, end;
-	float time_elapsed;
+	printf("Key length: ");
+	scanf("%d", &key_length);
+
+    cudaMallocManaged(&cracked_key, sizeof(uint64));
+	cudaMallocManaged(&has_key, sizeof(int));
+	has_key = NULL;
 	
-
-	int * has_key = NULL;
-    int temp = 0;
-    uint64 * cracked_key = NULL;
-    uint64 found_key;
-    uint64 * d_data = NULL;
-    uint64 * d_msg = NULL;
-
-    cudaError_t error;
-
-    if((error = cudaMalloc((void **) &has_key, sizeof(int))) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
-
-    if((error = cudaMalloc((void **) &cracked_key, sizeof(uint64))) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
-
-    if((error = cudaMemcpy(has_key, &temp, sizeof(int), cudaMemcpyHostToDevice)) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
+    uint64 key = generateKey(key_length);
+	uint64 encrypted_message = encryptMessage(message, key);
+	printBits(key);
+	printBits(encrypted_message);
     
-    if((error = cudaMalloc((void **) &d_data, sizeof(uint64))) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
-    
-    if((error = cudaMalloc((void **) &d_msg, sizeof(uint64))) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
-    
-    if((error = cudaMemcpy(d_msg, &encrypted_message, sizeof(uint64), cudaMemcpyHostToDevice)) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
-    
-    if((error = cudaMemcpy(d_data, &data, sizeof(uint64), cudaMemcpyHostToDevice)) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
+	//printf("%llX\n", key);
 
-    printf("\nGPU : Brute forcing DES...\n");
-    start = clock();
+	// ~~~ GPU ~~~
+    printf("GPU : Brute-forcing DES...\n");
+	start = clock();
+    crack<<<8,8>>>(message, encrypted_message, cracked_key, has_key);
+    gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
 
-    crack<<<256, 128>>>(d_data, d_msg, cracked_key, has_key);
-
-    if((error = cudaDeviceSynchronize()) != cudaSuccess) ERR(cudaGetErrorString(error));
-    
     end = clock();
-    time_elapsed = ((float) (end - start)) / CLOCKS_PER_SEC;
-    
-    if((error = cudaMemcpy(&found_key, cracked_key, sizeof(uint64), cudaMemcpyDeviceToHost)) != cudaSuccess) {
-        ERR(cudaGetErrorString(error));
-    }
-
+    time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
     printf("GPU : Key found!\n");
-    printf("GPU : Time elapsed - %f\n", time_elapsed);
-    printf("GPU : Cracked key: %llX\n", found_key);
+    printf("GPU : Found key: %llX\n", *cracked_key);
+    printf("GPU : Total time: %f\n", time_total);
 
-    cudaFree(has_key);
-    cudaFree(cracked_key);
-    cudaFree(d_data);
-    cudaFree(d_msg);
+    return 0;
 
 }
