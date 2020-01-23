@@ -338,14 +338,14 @@ int main(int argc, char** argv)
 
     printf("CPU : Brute-forcing DES...\n");
 	start = clock();
-    crack<<<512,1024>>>(message, encrypted_message, cracked_key, has_key)
+    crack<<<512,1024>>>(message, encrypted_message, &cracked_key, &has_key);
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
 
     end = clock();
     time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
     printf("GPU : Key found!\n");
-    printf("GPU : Found key: %llX\n", i);
+    printf("GPU : Found key: %llX\n", cracked_key);
     printf("GPU : Total time: %f\n", time_total);
 
 
