@@ -326,15 +326,15 @@ __device__ __host__ uint64 getBit(uint64 number, int bitIdx);                   
 __device__ __host__ uint64 shiftKeys(uint64 value, int shifts);                 //
 
 
-__global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key) {
+__global__ void brute_force(uint64 message, uint64 encrypted_message, uint64 * cracked_key, volatile int * has_key) {
     
     uint64 i = blockIdx.x * blockDim.x + threadIdx.x;
     uint64 stride = blockDim.x * gridDim.x;
 
     while(i < ~(0ULL) && *has_key == 0) {
-        uint64 currentValue = encryptMessageGpu(*message, i);
+        uint64 currentValue = encryptMessageGpu(message, i);
 	
-        if (currentValue == *encrypted_message) {
+        if (currentValue == encrypted_message) {
 	        *cracked_key = i;
 	        *has_key = 1;   
         }
@@ -555,7 +555,6 @@ int main(int argc, char ** argv) {
     float time_total;
 
     // ~~~ GPU ~~~
-
     int * has_key = NULL;
     uint64 * cracked_key = NULL;
 	cudaMallocManaged(&cracked_key, sizeof(uint64));
@@ -569,11 +568,8 @@ int main(int argc, char ** argv) {
 	gpuErrchk(cudaPeekAtLastError());
 	gpuErrchk(cudaDeviceSynchronize());
 
-    
     end = clock();
     time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
-    
-
     printf("GPU : Key found!\n");
     printf("GPU : Time taken: %f\n", time_total);
     printf("GPU : Cracked key: %llX\n", found_key);
