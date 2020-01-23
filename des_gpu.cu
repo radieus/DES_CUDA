@@ -163,7 +163,7 @@ typedef unsigned long uint32;
 
 __device__ void printBits(uint64 n);
 __host__ uint64 generateKey(int key_size);
-__device__ uint64 getBit(uint64 number, int bitIdx);
+__host__ __device__ uint64 getBit(uint64 number, int bitIdx);
 __host__ __device__ uint64 permute(uint64 key, int* table, int length);
 __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
 __device__ uint64 shiftKeys(uint64 value, int shifts);
@@ -212,7 +212,7 @@ __host__ uint64 generateKey(int key_size)
     return key;
 }
 
-__device__ uint64 getBit(uint64 number, int bitIdx)
+__host__ __device__ uint64 getBit(uint64 number, int bitIdx)
 {
 	return 1ULL & (number >> bitIdx);
 }
