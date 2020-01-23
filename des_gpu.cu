@@ -499,7 +499,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
+		S[i] = S_POINTER[i][(int)FirstLast * 16 + (int)Middle];
 	}
 
 	uint64 result = 0;
@@ -526,7 +526,7 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-		S[i] = ALL_S_CUDA[i][(int)FirstLast * 16 + (int)Middle];
+		S[i] = S_POINTER_CUDA[i][(int)FirstLast * 16 + (int)Middle];
 	}
 
 	uint64 result = 0;
