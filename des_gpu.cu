@@ -555,7 +555,7 @@ int main(int argc, char** argv)
     
     uint64 key = generateKey(key_length);
 	uint64 encrypted_message = encryptMessage(message, key);
-	printBits(encrypted_message);
+	printBits(key);
     
 	//printf("%llX\n", key);
 
