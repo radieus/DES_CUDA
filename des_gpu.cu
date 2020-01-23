@@ -428,7 +428,7 @@ __host__ void createSubkeys(uint64 key, uint64* subKeys)
 	}
 }
 
-__device__ void generateSubkeysGpu(uint64 key, uint64 * Subkeys) {
+__device__ void createSubkeysGpu(uint64 key, uint64 * Subkeys) {
     int size_PC1 = sizeof(PC_1)/sizeof(PC_1[0]);
     int size_PC2 = sizeof(PC_2)/sizeof(PC_2[0]);
 
