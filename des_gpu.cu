@@ -552,15 +552,14 @@ int main(int argc, char** argv)
 
 	uint64 data = 0x0123456789ABCDEF;
 
-	uint64 key = generateKey(key_size);
+	int key_length = 0;
+	printf("Key length: ");
+	scanf("%d", &key_length);
+	uint64 key = generateKey(key_length);
     uint64 encrypted_message = encryptMessage(data, key);
     clock_t start, end;
 	float time_elapsed;
 	
-	int key_length = 0;
-
-	printf("Key length: ");
-	scanf("%d", &key_length);
 
 	int * has_key = NULL;
     int temp = 0;
