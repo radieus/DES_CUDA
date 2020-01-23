@@ -456,7 +456,7 @@ __host__ uint64 encryptMessage(uint64 message, uint64 key)
 
 	uint32 L[17];
 	uint32 R[17];
-	uint64 ip = permute(message, IP, 64);
+	uint64 ip = permute(message, IP_HOST, 64);
 
 	splitKey(ip, &L[0], &R[0], 64);
 
