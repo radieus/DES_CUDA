@@ -337,7 +337,7 @@ __global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_
 
     while(i < ~(0ULL) && *has_key == 0) {
 
-        uint64 currentValue = encryptMessage(message, i);
+        uint64 currentValue = encryptMessageGpu(message, i);
 	
         if (currentValue == encrypted_message) {
 	        *cracked_key = i;
