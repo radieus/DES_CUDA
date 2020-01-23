@@ -515,7 +515,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 		result |= S[i] << (28 - 4 * i);
 	}
 
-	return permute(result, P_HOST, 32);
+	return (uint32) permute(result, P_HOST, 32);
 }
 
 __device__ uint32 funcGpu(uint32 data, uint64 key)
@@ -542,7 +542,7 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 		result |= S[i] << (28 - 4 * i);
 	}
 
-	return permute(result, P, 32);
+	return (uint32) permute(result, P, 32);
 }
 
 int main(int argc, char** argv) 
