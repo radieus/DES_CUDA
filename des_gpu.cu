@@ -322,6 +322,7 @@ int SHIFTS_HOST[16] = {
 typedef unsigned long long uint64;
 typedef unsigned long uint32;
 
+__global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* cracked_key, volatile int* has_key);
 __device__ __host__ void printBits(uint64 n); //
 __host__ uint64 generateKey(int key_size); //
 __host__ __device__ uint64 getBit(uint64 number, int bitIdx);
@@ -392,23 +393,31 @@ __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
 
 __host__ void createSubkeys(uint64 key, uint64* subKeys) 
 {
-    uint64 key_plus;
-    key_plus = permute(key, PC_1_HOST, 56);
+    int size_PC1 = sizeof(PC_1)/sizeof(PC_1_HOST[0]);
+    int size_PC2 = sizeof(PC_2)/sizeof(PC_2_HOST[0]);
 
-	uint32 C[17];
-	uint32 D[17];
+    uint64 permuted_key = permute(key, PC_1, size_PC1);
 
-	splitKey(key_plus, &C[0], &D[0], 56);
+    uint32 C[17], D[17];
 
-    for (int i = 1; i < 17; i++) {
-        C[i] = shiftKeys(C[i-1], SHIFTS_HOST[i-1]);
-        D[i] = shiftKeys(D[i-1], SHIFTS_HOST[i-1]);
+    C[0]  = (uint32) (permuted_key >> 28  & 0xFFFFFFF);
+    D[0]  = (uint32) (permuted_key >> 0 & 0xFFFFFFF);
+
+    // apply left shifts
+    for(int i = 1; i <= 16; i++) {
+
+        C[i] = C[i-1] << SHIFTS_HOST[i-1];
+        D[i] = D[i-1] << SHIFTS_HOST[i-1];
+
+        C[i] |= C[i] >> 28;
+        D[i] |= D[i] >> 28;
+
+        C[i] &= ~(3UL << 28);
+        D[i] &= ~(3UL << 28);
+
+        uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
+        subkeys[i-1] = permute(merged_subkey, PC_2_HOST, size_PC2);
     }
-
-	for (int i = 0; i < 16; i++) {
-		subKeys[i] = C[i + 1] << 28 | D[i + 1];
-		subKeys[i] = permute(subKeys[i], PC_2_HOST, 48);
-	}
 }
 
 
