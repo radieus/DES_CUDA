@@ -553,7 +553,7 @@ int main(int argc, char** argv)
 	clock_t start, end;
 	float time_total;
 
-    volatile int* has_key;
+	int* has_key;
     uint64* cracked_key;
 
 	printf("Key length: ");
