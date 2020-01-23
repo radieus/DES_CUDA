@@ -341,7 +341,7 @@ __global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* crac
 
     while(i < ~(0ULL) && *has_key == 0) {
         uint64 currentValue = encryptMessageGpu(*message, i);
-
+		printBits(currentValue);
         if (currentValue == *encrypted_message) {
 	        *cracked_key = i;
 	        *has_key = 1;   
@@ -439,8 +439,8 @@ __device__ void createSubkeysGpu(uint64 key, uint64* subKeys)
 	splitKey(key_plus, &C[0], &D[0], 56);
 
     for (int i = 1; i < 17; i++) {
-        C[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
-        D[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
+        C[i] = shiftKeys(C[i-1], SHIFTS[i-1]);
+        D[i] = shiftKeys(D[i-1], SHIFTS[i-1]);
     }
 
 	for (int i = 0; i < 16; i++) {
