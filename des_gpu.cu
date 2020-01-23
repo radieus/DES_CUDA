@@ -555,7 +555,12 @@ int main(int argc, char** argv)
 	uint64 key = generateKey(key_size);
     uint64 encrypted_message = encryptMessage(data, key);
     clock_t start, end;
-    float time_elapsed;
+	float time_elapsed;
+	
+	int key_length = 0;
+
+	printf("Key length: ");
+	scanf("%d", &key_length);
 
 	int * has_key = NULL;
     int temp = 0;
@@ -597,7 +602,7 @@ int main(int argc, char** argv)
     printf("\nGPU : Brute forcing DES...\n");
     start = clock();
 
-    brute_force<<<256, 128>>>(d_data, d_msg, cracked_key, has_key);
+    crack<<<256, 128>>>(d_data, d_msg, cracked_key, has_key);
 
     if((error = cudaDeviceSynchronize()) != cudaSuccess) ERR(cudaGetErrorString(error));
     
