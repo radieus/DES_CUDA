@@ -409,7 +409,7 @@ __device__ void generateSubkeysGpu(uint64 key, uint64* subKeys)
 __device__ uint64 encryptMessageGpu(uint64 message, uint64 key)
 {	
 	uint64 K[16];
-	generateSubkeys(key, K);
+	generateSubkeysGpu(key, K);
 
 	uint32 L[17];
 	uint32 R[17];
