@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <strings.h>
-
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -334,7 +333,7 @@ __device__ __host__ uint64 getBit(uint64 number, int bitIdx);                   
 __device__ __host__ uint64 shiftKeys(uint64 value, int shifts);                 //
 
 
-__global__ void brute_force(uint64 message, uint64 encrypted_message, uint64 * cracked_key, volatile int * has_key) {
+__global__ void crack(uint64 message, uint64 encrypted_message, uint64 * cracked_key, volatile int * has_key) {
     
     uint64 i = blockIdx.x * blockDim.x + threadIdx.x;
     uint64 stride = blockDim.x * gridDim.x;
@@ -572,7 +571,7 @@ int main(int argc, char ** argv) {
 	
 	start = clock();
 	
-	brute_force<<<256, 128>>>(message, encrypted_message, cracked_key, has_key);
+	crack<<<256, 128>>>(message, encrypted_message, cracked_key, has_key);
 	gpuErrchk(cudaPeekAtLastError());
 	gpuErrchk(cudaDeviceSynchronize());
 
