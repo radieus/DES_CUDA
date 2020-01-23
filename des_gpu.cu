@@ -340,9 +340,7 @@ __global__ void crack(uint64 * message, uint64 * encrypted_message, uint64* crac
     uint64 stride = blockDim.x * gridDim.x;
 
     while(i < ~(0ULL) && *has_key == 0) {
-		printf("%llu\n", i);
         uint64 currentValue = encryptMessageGpu(*message, i);
-		printBits(currentValue);
 
         if (currentValue == *encrypted_message) {
 	        *cracked_key = i;
