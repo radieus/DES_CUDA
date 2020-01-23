@@ -3,6 +3,9 @@
 #include <time.h>
 #include <strings.h>
 
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 #define ERR(source) (perror(source), fprintf(stderr,"%s:%d\n",__FILE__,__LINE__), exit(EXIT_FAILURE))
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
