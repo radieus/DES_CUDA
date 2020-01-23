@@ -164,12 +164,12 @@ typedef unsigned long uint32;
 __device__ void printBits(uint64 n);
 __host__ uint64 generateKey(int key_size);
 __device__ uint64 getBit(uint64 number, int bitIdx);
-__device__ uint64 permute(uint64 key, int* table, int length);
-__device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
+__host__ __device__ uint64 permute(uint64 key, int* table, int length);
+__host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
 __device__ uint64 shiftKeys(uint64 value, int shifts);
-__device__ void createSubkeys(uint64 key, uint64* subKeys);
+__host__ __device__ void createSubkeys(uint64 key, uint64* subKeys);
 __host__ __device__ uint64 encryptMessage(uint64 key, uint64 message);
-__device__ uint32 func(uint32 data, uint64 key);
+__host__ __device__ uint32 func(uint32 data, uint64 key);
 
 __global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) {
     
@@ -217,7 +217,7 @@ __device__ uint64 getBit(uint64 number, int bitIdx)
 	return 1ULL & (number >> bitIdx);
 }
 
-__device__ uint64 permute(uint64 key, int* table, int length)
+__host__ __device__ uint64 permute(uint64 key, int* table, int length)
 {
     uint64 permKey = 0;
 
@@ -229,7 +229,7 @@ __device__ uint64 permute(uint64 key, int* table, int length)
     return permKey;
 }
 
-__device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
+__host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
 {
     if (size == 64) {
         C[0] = key & 0xFFFFFFFF;
@@ -245,7 +245,7 @@ __device__ uint64 shiftKeys(uint64 value, int shifts)
     return (value << shifts) | (value >> (28 - shifts));
 }
 
-__device__ void createSubkeys(uint64 key, uint64* subKeys) 
+__host__ __device__ void createSubkeys(uint64 key, uint64* subKeys) 
 {
     uint64 key_plus;
     key_plus = permute(key, PC_1, 56);
@@ -287,7 +287,7 @@ __host__ __device__ uint64 encryptMessage(uint64 message, uint64 key)
     return permute(RL, IP_REVERSED, 64);
 }
 
-__device__ uint32 func(uint32 data, uint64 key)
+__host__ __device__ uint32 func(uint32 data, uint64 key)
 {
 	uint64 R_exp = permute(data, E_BIT, 48);
 	uint64 xorr = R_exp ^ key;
