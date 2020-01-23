@@ -561,7 +561,7 @@ int main(int argc, char** argv)
 
 	uint64 data = 0x0123456789ABCDEF;
 
-	int key_length = 0;
+	int key_length;
 	printf("Key length: ");
 	scanf("%d", &key_length);
 	uint64 key = generateKey(key_length);
