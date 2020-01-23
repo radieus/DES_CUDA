@@ -162,13 +162,13 @@ typedef unsigned long long uint64;
 typedef unsigned long uint32;
 
 __device__ void printBits(uint64 n);
-__device__ uint64 generateKey(int key_size);
+__host__ uint64 generateKey(int key_size);
 __device__ uint64 getBit(uint64 number, int bitIdx);
 __device__ uint64 permute(uint64 key, int* table, int length);
 __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size);
 __device__ uint64 shiftKeys(uint64 value, int shifts);
 __device__ void createSubkeys(uint64 key, uint64* subKeys);
-__device__ uint64 encryptMessage(uint64 key, uint64 message);
+__host__ uint64 encryptMessage(uint64 key, uint64 message);
 __device__ uint32 func(uint32 data, uint64 key);
 
 __global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) {
@@ -199,7 +199,7 @@ __device__ void printBits(uint64 n)
     printf("\n");
 }
 
-__device__ uint64 generateKey(int key_size)
+__host__ uint64 generateKey(int key_size)
 {
     srand(time(NULL));
     uint64 key = 0;
@@ -266,7 +266,7 @@ __device__ void createSubkeys(uint64 key, uint64* subKeys)
 	}
 }
 
-__device__ uint64 encryptMessage(uint64 message, uint64 key)
+__host__ uint64 encryptMessage(uint64 message, uint64 key)
 {	
 	uint64 K[16];
 	createSubkeys(key, K);
