@@ -342,6 +342,8 @@ __global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_
 		//printBits(i);
         uint64 currentValue = encryptMessageGpu(message, i);
 		printBits(currentValue);
+		printf("\n");
+
         if (currentValue == encrypted_message) {
 	        *cracked_key = i;
 	        *has_key = 1;   
