@@ -410,7 +410,7 @@ __device__ uint64 encrypt_message_gpu(uint64 message, uint64 key) {
     uint64 K[16];
     uint32 L[17], R[17];
 
-    generate_subkeys_gpu(key, K);
+    generateSubkeysGpu(key, K);
 
     int size_IP = sizeof(IP_CUDA)/sizeof(IP_CUDA[0]);
     uint64 IP_message = permute(message, IP_CUDA, size_IP);
