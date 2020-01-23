@@ -158,7 +158,7 @@ __constant__ int SHIFTS[16] = {
 	1
 };
 
-int SHIFTS[16] = {
+int SHIFTS_HOST[16] = {
 	1,
 	1,
 	2,
@@ -177,7 +177,7 @@ int SHIFTS[16] = {
 	1
 };
 
-int* ALL_S[8] = {
+int* ALL_S_HOST[8] = {
 	S1, S2, S3, S4, S5, S6, S7, S8
 };
 
