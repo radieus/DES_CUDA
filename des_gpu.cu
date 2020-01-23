@@ -416,7 +416,7 @@ __host__ void createSubkeys(uint64 key, uint64* subKeys)
         D[i] &= ~(3UL << 28);
 
         uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
-        subkeys[i-1] = permute(merged_subkey, PC_2_HOST, size_PC2);
+        subKeys[i-1] = permute(merged_subkey, PC_2_HOST, size_PC2);
     }
 }
 
