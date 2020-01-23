@@ -552,7 +552,6 @@ int main(int argc, char** argv)
 	int key_length = 0;
 	clock_t start, end;
 	float time_total;
-	int init = 0;
 
     volatile int* has_key;
     uint64* cracked_key;
@@ -561,7 +560,7 @@ int main(int argc, char** argv)
 	scanf("%d", &key_length);
 
     cudaMallocManaged(&cracked_key, sizeof(uint64));
-	cudaMallocManaged(&has_key, sizeof(volatile int));
+	cudaMallocManaged(&has_key, sizeof(int));
 	has_key = 0;
 	
     uint64 key = generateKey(key_length);
