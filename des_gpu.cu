@@ -540,17 +540,16 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 int main(int argc, char ** argv) {
 
     uint64 data = 0x0123456789ABCDEF;
+	int key_size = 0;
 
-    if(argc != 2) {
-        printf("Usage: %s <key_size>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    int key_size = atoi(argv[1]);
+	printf("Key length: ");
+	scanf("%d", &key_size);
+	
     if(key_size > 64) {
         printf("Key size reduced to 64 bits.");
         key_size = 64;
-    }
+	}
+	
     uint64 key = generateKey(key_size);
     uint64 encrypted_message = encryptMessage(data, key);
     clock_t start, end;
