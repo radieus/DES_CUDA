@@ -452,7 +452,7 @@ __device__ void generateSubkeysGpu(uint64 key, uint64 * Subkeys) {
         D[i] &= ~(3UL << 28);
 
         uint64 merged_subkey = ((uint64)C[i] << 28) | D[i];
-        subkeys[i-1] = permute(merged_subkey, PC_2, size_PC2);
+        Subkeys[i-1] = permute(merged_subkey, PC_2, size_PC2);
     }
 }
 
