@@ -329,6 +329,8 @@ __host__  uint64 encryptMessage(uint64 key, uint64 message);
 __device__  uint64 encryptMessageGpu(uint64 key, uint64 message);
 __host__ uint32 func(uint32 data, uint64 key);
 __device__ uint32 funcGpu(uint32 data, uint64 key);
+__host__ shiftKeys(uint64 value, int shifts);
+
 
 __global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) {
     
@@ -356,6 +358,11 @@ __device__ __host__ void printBits(uint64 n)
         (n & i) ? printf("1") : printf("0"); 
 
     printf("\n");
+}
+
+__host__ shiftKeys(uint64 value, int shifts)
+{
+    return (value << shifts) | (value >> (28 - shifts));
 }
 
 __host__ uint64 generateKey(int key_size)
@@ -410,8 +417,8 @@ __host__ void createSubkeys(uint64 key, uint64* subKeys)
 	splitKey(key_plus, &C[0], &D[0], 56);
 
     for (int i = 1; i < 17; i++) {
-        C[i] = ((C[i-1] << SHIFTS_HOST[i-1]) | (C[i-1] >> (28 - SHIFTS_HOST[i-1])));
-        D[i] = ((C[i-1] << SHIFTS_HOST[i-1]) | (C[i-1] >> (28 - SHIFTS_HOST[i-1])));
+        C[i] = shiftKeys(C[i-1], SHIFTS[i-1]);
+        D[i] = shiftKeys(D[i-1], SHIFTS[i-1]);
     }
 
 	for (int i = 0; i < 16; i++) {
