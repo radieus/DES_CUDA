@@ -562,7 +562,7 @@ int main(int argc, char** argv)
 
     cudaMallocManaged(&cracked_key, sizeof(uint64));
 	cudaMallocManaged(&has_key, sizeof(volatile int));
-	cudaMemcpy(has_key, &temp, sizeof(int), cudaMemcpyHostToDevice)));
+	cudaMemcpy(has_key, &init, sizeof(int), cudaMemcpyHostToDevice)));
 	
     uint64 key = generateKey(key_length);
 	uint64 encrypted_message = encryptMessage(message, key);
