@@ -411,7 +411,7 @@ __host__ __device__ void splitKey(uint64 key, uint32* C, uint32* D, int size)
 __host__ void createSubkeys(uint64 key, uint64* subKeys) 
 {
     uint64 key_plus;
-    key_plus = permute(key, PC_1, 56);
+    key_plus = permute(key, PC_1_HOST, 56);
 
 	uint32 C[17];
 	uint32 D[17];
@@ -425,7 +425,7 @@ __host__ void createSubkeys(uint64 key, uint64* subKeys)
 
 	for (int i = 0; i < 16; i++) {
 		subKeys[i] = C[i + 1] << 28 | D[i + 1];
-		subKeys[i] = permute(subKeys[i], PC_2, 48);
+		subKeys[i] = permute(subKeys[i], PC_2_HOST, 48);
 	}
 }
 
@@ -457,7 +457,7 @@ __host__ uint64 encryptMessage(uint64 message, uint64 key)
 
 	uint32 L[17];
 	uint32 R[17];
-	uint64 ip = permute(message, IP, 64);
+	uint64 ip = permute(message, IP_HOST, 64);
 
 	splitKey(ip, &L[0], &R[0], 64);
 
@@ -494,7 +494,7 @@ __device__ uint64 encryptMessageGpu(uint64 message, uint64 key)
 
 __host__ uint32 func(uint32 data, uint64 key)
 {
-	uint64 R_exp = permute(data, E_BIT, 48);
+	uint64 R_exp = permute(data, E_BIT_HOST, 48);
 	uint64 xorr = R_exp ^ key;
 
 	uint64 S[8];
@@ -516,7 +516,7 @@ __host__ uint32 func(uint32 data, uint64 key)
 		result |= S[i] << (28 - 4 * i);
 	}
 
-	return permute(result, P, 32);
+	return permute(result, P_HOST, 32);
 }
 
 __device__ uint32 funcGpu(uint32 data, uint64 key)
