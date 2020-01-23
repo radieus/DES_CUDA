@@ -313,14 +313,14 @@ __constant__ int SHIFTS_CUDA[16] = {
 typedef unsigned long uint32;
 typedef unsigned long long uint64;
 
-__host__ uint64 generatekey(int key_size);                                      //
-__host__ void generateSubkeys(uint64 key, uint64 * subkeys);                  
+__host__ uint64 generateKey(int key_size);                                      //
+__host__ void generateSubkeys(uint64 key, uint64 * subkeys);                   //              
 __host__ uint32 func(uint32 R, uint64 K);                                       //
-__host__ uint64 encrypt_message(uint64 message, uint64 key);
+__host__ uint64 encryptMessage(uint64 message, uint64 key);
 __global__ void brute_force(uint64 * message, uint64 * encrypted_message, uint64 * cracked_key, volatile int * has_key);
 __device__ void generateSubkeysGpu(uint64 key, uint64 * subkeys);
 __device__ uint32 funcGpu(uint32 R, uint64 K);                                  //
-__device__ uint64 encrypt_message_gpu(uint64 message, uint64 key);
+__device__ uint64 encryptMessageGpu(uint64 message, uint64 key);
 __device__ __host__ void printBits(uint64 n);                                   //
 __device__ __host__ uint64 permute(uint64 key, int * table, int size);          //
 __device__ __host__ uint64 getBit(uint64 number, int bitIdx);                   //
@@ -406,27 +406,25 @@ __device__ void generateSubkeysGpu(uint64 key, uint64* subKeys)
 	}
 }
 
-__device__ uint64 encrypt_message_gpu(uint64 message, uint64 key) {
-    uint64 K[16];
-    uint32 L[17], R[17];
+__host__ uint64 encryptMessage(uint64 message, uint64 key)
+{	
+	uint64 K[16];
+	generateSubkeys(key, K);
 
-    generateSubkeysGpu(key, K);
+	uint32 L[17];
+	uint32 R[17];
+	uint64 ip = permute(message, IP_CUDA, 64);
 
-    int size_IP = sizeof(IP_CUDA)/sizeof(IP_CUDA[0]);
-    uint64 IP_message = permute(message, IP_CUDA, size_IP);
+	splitKey(ip, &L[0], &R[0], 64);
 
-    L[0]  = (uint32) (IP_message >> 32 & 0xFFFFFFFF);
-    R[0]  = (uint32) (IP_message >> 0 & 0xFFFFFFFF);
-
-    for(int i = 1; i <= 16; i++) {
-        L[i] = R[i-1];
-        R[i] = L[i-1] ^ funcGpu(R[i-1], K[i-1]);
-    }
+	for (int i = 1; i < 17; i++) {
+		L[i] = R[i-1];
+		R[i] = L[i-1] ^ funcGpu(R[i-1], K[i-1]);
+	}
 
     uint64 RL = ((uint64) R[16] << 32) | L[16];
-    uint64 encrypted_message = permute(RL, IP_REV_CUDA, 64);
 
-    return encrypted_message;
+    return permute(RL, IP_REV_CUDA, 64);
 }
 
 
@@ -463,27 +461,25 @@ __host__ void generateSubkeys(uint64 key, uint64* subKeys)
 	}
 }
 
-__host__ uint64 encrypt_message(uint64 message, uint64 key) {
-    uint64 K[16];
-    uint32 L[17], R[17];
+__host__ uint64 encryptMessage(uint64 message, uint64 key)
+{	
+	uint64 K[16];
+	generateSubkeys(key, K);
 
-    generateSubkeys(key, K);
+	uint32 L[17];
+	uint32 R[17];
+	uint64 ip = permute(message, IP, 64);
 
-    int size_IP = sizeof(IP)/sizeof(IP[0]);
-    uint64 IP_message = permute(message, IP, size_IP);
+	splitKey(ip, &L[0], &R[0], 64);
 
-    L[0]  = (uint32) (IP_message >> 32 & 0xFFFFFFFF);
-    R[0]  = (uint32) (IP_message >> 0 & 0xFFFFFFFF);
-
-    for(int i = 1; i <= 16; i++) {
-        L[i] = R[i-1];
-        R[i] = L[i-1] ^ func(R[i-1], K[i-1]);
-    }
+	for (int i = 1; i < 17; i++) {
+		L[i] = R[i-1];
+		R[i] = L[i-1] ^ func(R[i-1], K[i-1]);
+	}
 
     uint64 RL = ((uint64) R[16] << 32) | L[16];
-    uint64 encrypted_message = permute(RL, IP_REV, 64);
 
-    return encrypted_message;
+    return permute(RL, IP_REV, 64);
 }
 
 __host__ uint32 func(uint32 data, uint64 key)
