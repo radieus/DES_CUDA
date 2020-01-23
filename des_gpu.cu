@@ -543,15 +543,13 @@ int main(int argc, char** argv)
 	int key_length = 0;
 	clock_t start, end;
 	float time_total;
+	
+    volatile int* has_key;
+    uint64* cracked_key;
 
 	printf("Key length: ");
 	scanf("%d", &key_length);
 
-    // GPU part
-    volatile int* has_key;
-    uint64* cracked_key;
-
-    //int N = 1 << 64;
     cudaMallocManaged(&cracked_key, sizeof(uint64));
 	cudaMallocManaged(&has_key, sizeof(volatile int));
     
@@ -559,8 +557,8 @@ int main(int argc, char** argv)
     uint64 encrypted_message = encryptMessage(message, key);
     
 	//printf("%llX\n", key);
-	// ~~~ GPU ~~~
 
+	// ~~~ GPU ~~~
     printf("GPU : Brute-forcing DES...\n");
 	start = clock();
     crack<<<512,1024>>>(message, encrypted_message, cracked_key, has_key);
@@ -572,7 +570,6 @@ int main(int argc, char** argv)
     printf("GPU : Key found!\n");
     printf("GPU : Found key: %llX\n", *cracked_key);
     printf("GPU : Total time: %f\n", time_total);
-
 
     return 0;
 
