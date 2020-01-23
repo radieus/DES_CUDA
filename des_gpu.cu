@@ -332,7 +332,7 @@ __device__ uint32 funcGpu(uint32 data, uint64 key);
 __host__ uint64 shiftKeys(uint64 value, int shifts);
 
 
-__global__ void crack(uint64 *message, uint64 *encrypted_message, uint64* cracked_key, volatile int* has_key) 
+__global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) 
 {
     
     uint64 i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -340,10 +340,10 @@ __global__ void crack(uint64 *message, uint64 *encrypted_message, uint64* cracke
 
     while(i < ~(0ULL) && *has_key == 0) {
 		//printBits(i);
-        uint64 currentValue = encryptMessageGpu(*message, i);
+        uint64 currentValue = encryptMessageGpu(message, i);
 		printBits(currentValue);
 
-        if (currentValue == *encrypted_message) {
+        if (currentValue == encrypted_message) {
 	        *cracked_key = i;
 	        *has_key = 1;   
         }
