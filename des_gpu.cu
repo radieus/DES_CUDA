@@ -171,16 +171,16 @@ __device__ void createSubkeys(uint64 key, uint64* subKeys);
 __device__ uint64 encryptMessage(uint64 key, uint64 message);
 __device__ uint32 func(uint32 data, uint64 key);
 
-__global__ void crack(uint64* message, uint64* encrypted_message, uint64* cracked_key, volatile int* has_key) {
+__global__ void crack(uint64 message, uint64 encrypted_message, uint64* cracked_key, volatile int* has_key) {
     
     uint64 i = blockIdx.x * blockDim.x + threadIdx.x;
     uint64 stride = blockDim.x * gridDim.x;
 
     while(i < ~(0ULL) && *has_key == 0) {
 
-        uint64 currentValue = encryptMessage(*message, i);
+        uint64 currentValue = encryptMessage(message, i);
 	
-        if (currentValue == *encrypted_message) {
+        if (currentValue == encrypted_message) {
 	        *cracked_key = i;
 	        *has_key = 1;   
         }
