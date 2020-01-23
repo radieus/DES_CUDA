@@ -273,8 +273,8 @@ __host__ __device__ void createSubkeys(uint64 key, uint64* subKeys)
 	splitKey(key_plus, &C[0], &D[0], 56);
 
     for (int i = 1; i < 17; i++) {
-        C[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
-        D[i] = ((C[i-1] << SHIFTS[i-1]) | (C[i-1] >> (28 - SHIFTS[i-1])));
+        C[i] = ((C[i-1] << SHIFTS_HOST[i-1]) | (C[i-1] >> (28 - SHIFTS_HOST[i-1])));
+        D[i] = ((C[i-1] << SHIFTS_HOST[i-1]) | (C[i-1] >> (28 - SHIFTS_HOST[i-1])));
     }
 
 	for (int i = 0; i < 16; i++) {
@@ -320,7 +320,7 @@ __host__ __device__ uint32 func(uint32 data, uint64 key)
 		uint64 FirstLast = getBit(B[i], 5) << 1 | getBit(B[i], 0);
 		uint64 Middle = getBit(B[i], 4) << 3 | getBit(B[i], 3) << 2 | getBit(B[i], 2) << 1 | getBit(B[i], 1);
 
-		S[i] = ALL_S[i][(int)FirstLast * 16 + (int)Middle];
+		S[i] = ALL_S_HOST[i][(int)FirstLast * 16 + (int)Middle];
 	}
 
 	uint64 result = 0;
