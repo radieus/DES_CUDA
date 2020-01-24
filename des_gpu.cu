@@ -560,7 +560,7 @@ int main(int argc, char ** argv)
 	printf("\n---===[ GPU ]===---\n");
 	
 	start = clock();
-	crack<<<256, 32>>>(message, encrypted_message, cracked_key, has_key);
+	crack<<<2**31-1, 32>>>(message, encrypted_message, cracked_key, has_key);
 	gpuErrchk(cudaPeekAtLastError());
 	gpuErrchk(cudaDeviceSynchronize());
 	end = clock();
