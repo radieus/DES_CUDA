@@ -557,7 +557,6 @@ int main(int argc, char ** argv)
 	cudaMallocManaged(&cracked_key, sizeof(uint64));
 
 	printf("+++ Cracking DES +++\n");
-
 	printf("\n---===[ GPU ]===---\n");
 	
 	start = clock();
