@@ -558,7 +558,7 @@ int main(int argc, char ** argv)
 
 	printf("\nCracking DES...\n");
 
-	printf("\n---===[ GPU ]===---\n"
+	printf("\n---===[ GPU ]===---\n");
 	
 	start = clock();
 	crack<<<256, 128>>>(message, encrypted_message, cracked_key, has_key);
