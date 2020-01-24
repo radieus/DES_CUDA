@@ -309,7 +309,7 @@ __constant__ int SHIFTS[16] = {
 typedef unsigned long uint32;
 typedef unsigned long long uint64;
 
-__host__ uint64 generateKey(int key_length);                                      //
+__host__ uint64 generateKey(int key_length);                                    //
 __host__ void generateSubkeys(uint64 key, uint64 * subkeys);                    //              
 __host__ uint32 func(uint32 R, uint64 K);                                       //
 __host__ uint64 encryptMessage(uint64 message, uint64 key);                     //
@@ -329,7 +329,6 @@ __global__ void crack(uint64 message, uint64 encrypted_message, uint64 * cracked
 
     while(i < ~(0ULL) && *has_key == 0) {
 		uint64 currentValue = encryptMessageGpu(message, i);
-		printBits(currentValue);
 	
         if (currentValue == encrypted_message) {
 	        *cracked_key = i;
