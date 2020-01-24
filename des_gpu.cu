@@ -536,7 +536,7 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 int main(int argc, char ** argv) 
 {
 	uint64 message = 0x0123456789ABCDEF;
-	int key_length = atoi([argv[1]]);
+	int key_length = atoi(argv[1]);
 	
     if(key_length > 64) {
         printf("Key size reduced to 64 bits.");
