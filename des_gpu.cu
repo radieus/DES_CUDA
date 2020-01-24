@@ -328,7 +328,8 @@ __global__ void crack(uint64 message, uint64 encrypted_message, uint64 * cracked
     uint64 stride = blockDim.x * gridDim.x;
 
     while(i < ~(0ULL) && *has_key == 0) {
-        uint64 currentValue = encryptMessageGpu(message, i);
+		uint64 currentValue = encryptMessageGpu(message, i);
+		printBits(currentValue);
 	
         if (currentValue == encrypted_message) {
 	        *cracked_key = i;
@@ -550,7 +551,6 @@ int main(int argc, char ** argv)
 	float gpu_total;
 	float cpu_total;
 
-    // ~~~ GPU ~~~
     int * has_key = NULL;
 	uint64 * cracked_key = NULL;
 	cudaMallocManaged(&has_key, sizeof(int));
