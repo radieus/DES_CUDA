@@ -571,7 +571,7 @@ int main(int argc, char ** argv)
     printf("Time taken: %f\n", time_total);
     printf("Found key: %llX\n", *cracked_key);
 
-	printf("\n---===[ CPU ]===---\n"
+	printf("\n---===[ CPU ]===---\n");
 
     start = clock();
     for(uint64 i = 0; i <= ~(0ULL); i++) {
