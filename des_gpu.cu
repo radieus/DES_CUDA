@@ -556,13 +556,12 @@ int main(int argc, char ** argv)
 	cudaMallocManaged(&has_key, sizeof(int));
 	cudaMallocManaged(&cracked_key, sizeof(uint64));
 
-	printf("\n");
-	printf("\n+++ Cracking DES +++\n");
+	printf("+++ Cracking DES +++\n");
 
 	printf("\n---===[ GPU ]===---\n");
 	
 	start = clock();
-	crack<<<256, 128>>>(message, encrypted_message, cracked_key, has_key);
+	crack<<<256, 32>>>(message, encrypted_message, cracked_key, has_key);
 	gpuErrchk(cudaPeekAtLastError());
 	gpuErrchk(cudaDeviceSynchronize());
 	end = clock();
