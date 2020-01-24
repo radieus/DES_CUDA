@@ -309,7 +309,7 @@ __constant__ int SHIFTS[16] = {
 typedef unsigned long uint32;
 typedef unsigned long long uint64;
 
-__host__ uint64 generateKey(int key_size);                                      //
+__host__ uint64 generateKey(int key_length);                                      //
 __host__ void generateSubkeys(uint64 key, uint64 * subkeys);                    //              
 __host__ uint32 func(uint32 R, uint64 K);                                       //
 __host__ uint64 encryptMessage(uint64 message, uint64 key);                     //
@@ -321,7 +321,6 @@ __device__ __host__ void printBits(uint64 n);                                   
 __device__ __host__ uint64 permute(uint64 key, int * table, int size);          //
 __device__ __host__ uint64 getBit(uint64 number, int bitIdx);                   //
 __device__ __host__ uint64 shiftKeys(uint64 value, int shifts);                 //
-
 
 __global__ void crack(uint64 message, uint64 encrypted_message, uint64 * cracked_key, volatile int * has_key) {
     
@@ -345,7 +344,8 @@ __device__ __host__ uint64 getBit(uint64 number, int bitIdx)
 	return 1ULL & (number >> bitIdx);
 }
 
-__device__ __host__ void printBits(uint64 n) { 
+__device__ __host__ void printBits(uint64 n)
+{ 
     uint64 i; 
     for (i = 1ULL << 63; i > 0; i = i / 2) {
         (n & i) ? printf("1") : printf("0"); 
@@ -424,12 +424,12 @@ __device__ uint64 encryptMessageGpu(uint64 message, uint64 key)
 }
 
 
-__host__ uint64 generateKey(int key_size) {
+__host__ uint64 generateKey(int key_length) {
 
     srand(time(NULL));
     uint64 key = 0;
 
-    for(int i = 0; i < key_size; i++) {
+    for(int i = 0; i < key_length; i++) {
         const uint64 bit = (uint64) rand() % 2;
         key = (key & ~(1ULL << i)) | (bit << i);
     }
@@ -533,62 +533,62 @@ __device__ uint32 funcGpu(uint32 data, uint64 key)
 }
 
 
-int main(int argc, char ** argv) {
-
-    uint64 message = 0x0123456789ABCDEF;
-	int key_size = 0;
-
-	printf("Key length: ");
-	scanf("%d", &key_size);
+int main(int argc, char ** argv) 
+{
+	uint64 message = 0x0123456789ABCDEF;
+	int key_length = atoi([argv[1]]);
 	
-    if(key_size > 64) {
+    if(key_length > 64) {
         printf("Key size reduced to 64 bits.");
-        key_size = 64;
+        key_length = 64;
 	}
 	
-    uint64 key = generateKey(key_size);
+    uint64 key = generateKey(key_length);
     uint64 encrypted_message = encryptMessage(message, key);
     clock_t start, end;
-    float time_total;
+	float time_total;
+	float gpu_total;
+	float cpu_total;
 
     // ~~~ GPU ~~~
     int * has_key = NULL;
-    uint64 * cracked_key = NULL;
-	cudaMallocManaged(&cracked_key, sizeof(uint64));
+	uint64 * cracked_key = NULL;
 	cudaMallocManaged(&has_key, sizeof(int));
+	cudaMallocManaged(&cracked_key, sizeof(uint64));
 
-	printf("\nGPU : Brute forcing DES...\n");
+	printf("\nCracking DES...\n");
+
+	printf("\n---===[ GPU ]===---\n"
 	
 	start = clock();
-	
 	crack<<<256, 128>>>(message, encrypted_message, cracked_key, has_key);
 	gpuErrchk(cudaPeekAtLastError());
 	gpuErrchk(cudaDeviceSynchronize());
+	end = clock();
+	time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
+	gpu_total = time_total;
+    printf("Key found!\n");
+    printf("Time taken: %f\n", time_total);
+    printf("Found key: %llX\n", *cracked_key);
 
-    end = clock();
-    time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
-    printf("GPU : Key found!\n");
-    printf("GPU : Time taken: %f\n", time_total);
-    printf("GPU : Cracked key: %llX\n", *cracked_key);
+	printf("\n---===[ CPU ]===---\n"
 
-
-    // --------- CPU -------------
-
-    printf("CPU : Brute forcing DES...\n");
-    
     start = clock();
-
     for(uint64 i = 0; i <= ~(0ULL); i++) {
         uint64 msg = encryptMessage(message, i);
         if(msg == encrypted_message) {
             end = clock();
-            time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
-			printf("CPU : Key found!\n");
-			printf("CPU : Time taken: %f\n", time_total);
-            printf("CPU : Found key: %llX\n", i);
+			time_total = ((float) (end - start)) / CLOCKS_PER_SEC;
+			cpu_total = time_total;
+			printf("Key found!\n");
+			printf("Time taken: %f\n", time_total);
+            printf("Found key: %llX\n", i);
             break;
         }
-    }
+	}
 
-    return EXIT_SUCCESS;
+	printf("This run GPU was faster than CPU %f\n times\n", cpu_total/gpu_total);
+	
+	return EXIT_SUCCESS;
+	
 }
