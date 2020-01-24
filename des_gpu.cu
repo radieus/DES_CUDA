@@ -556,7 +556,7 @@ int main(int argc, char ** argv)
 	cudaMallocManaged(&has_key, sizeof(int));
 	cudaMallocManaged(&cracked_key, sizeof(uint64));
 
-	printf("\nCracking DES...\n");
+	printf("Cracking DES...\n");
 
 	printf("\n---===[ GPU ]===---\n");
 	
@@ -587,7 +587,7 @@ int main(int argc, char ** argv)
         }
 	}
 
-	printf("This run GPU was faster than CPU %f\n times\n", cpu_total/gpu_total);
+	printf("This run GPU was faster than CPU %f times\n", cpu_total/gpu_total);
 	
 	return EXIT_SUCCESS;
 	
